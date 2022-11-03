@@ -5,49 +5,64 @@
 extern "C" {
 #endif
 
-struct __libcamera_camera_manager_t {
-    std::unique_ptr<libcamera::CameraManager> instance;
-};
-
-struct __libcamera_camera_list_t {
-    std::vector<std::shared_ptr<libcamera::Camera>> instance;
-};
-
-libcamera_camera_manager_t libcamera_camera_manager_create() {
-    return new __libcamera_camera_manager_t { std::make_unique<libcamera::CameraManager>() };
+libcamera_camera_manager_t* libcamera_camera_manager_create() {
+    return new libcamera::CameraManager();
 }
 
-void libcamera_camera_manager_destroy(libcamera_camera_manager_t mgr) {
+void libcamera_camera_manager_destroy(libcamera_camera_manager_t* mgr) {
     delete mgr;
 }
 
-int libcamera_camera_manager_start(libcamera_camera_manager_t mgr) {
-    return mgr->instance->start();
+int libcamera_camera_manager_start(libcamera_camera_manager_t* mgr) {
+    return mgr->start();
 }
 
-void libcamera_camera_manager_stop(libcamera_camera_manager_t mgr) {
-    mgr->instance->stop();
+void libcamera_camera_manager_stop(libcamera_camera_manager_t* mgr) {
+    mgr->stop();
 }
 
-libcamera_camera_list_t libcamera_camera_manager_cameras(libcamera_camera_manager_t mgr) {
-    auto cameras = mgr->instance->cameras();
-    return new __libcamera_camera_list_t { cameras };
+libcamera_camera_list_t* libcamera_camera_manager_cameras(libcamera_camera_manager_t* mgr) {
+    return new libcamera_camera_list_t(std::move(mgr->cameras()));
 }
 
-int libcamera_camera_list_size(libcamera_camera_list_t list) {
-    return list->instance.size();
-}
+libcamera_camera_t* libcamera_camera_manager_get_id(libcamera_camera_manager_t* mgr, const char* id) {
+    auto camera = mgr->get(std::string(id));
 
-libcamera_camera_t libcamera_camera_list_get(libcamera_camera_list_t list, int index) {
-    if (list->instance.size() <= index) {
-        return nullptr;
+    if (camera == nullptr) {
+        return NULL;
     } else {
-        return new __libcamera_camera_t { list->instance[index] }
+        return new libcamera_camera_t(camera);
     }
 }
 
-void libcamera_camera_list_destroy(libcamera_camera_list_t list) {
-    delete reinterpret_cast<std::vector<std::shared_ptr<libcamera::Camera>>*>(list);
+libcamera_camera_t* libcamera_camera_manager_get_dev(libcamera_camera_manager_t* mgr, dev_t dev) {
+    auto camera = mgr->get(dev);
+
+    if (camera == nullptr) {
+        return NULL;
+    } else {
+        return new libcamera_camera_t(camera);
+    }
+}
+
+const char* libcamera_camera_manager_version(libcamera_camera_manager_t* mgr) {
+    return mgr->version().c_str();
+}
+
+size_t libcamera_camera_list_size(libcamera_camera_list_t* list) {
+    return list->size();
+}
+
+libcamera_camera_t* libcamera_camera_list_get(libcamera_camera_list_t* list, size_t index) {
+    if (list->size() <= index) {
+        return nullptr;
+    } else {
+        return new libcamera_camera_t(list->at(index));
+    }
+}
+
+void libcamera_camera_list_destroy(libcamera_camera_list_t* list) {
+    delete list;
 }
 
 #ifdef __cplusplus
