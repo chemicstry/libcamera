@@ -61,6 +61,7 @@ libatomic = cc.find_library('atomic', required : false)
 libthreads = dependency('threads')
 
 subdir('base')
+subdir('c_api')
 subdir('ipa')
 subdir('pipeline')
 subdir('proxy')

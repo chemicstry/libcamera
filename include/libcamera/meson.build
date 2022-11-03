@@ -19,6 +19,7 @@ libcamera_public_headers = files([
 ])
 
 subdir('base')
+subdir('c_api')
 subdir('internal')
 subdir('ipa')
 
